@@ -1,2 +1,2 @@
 all:
-	gcc -o spectre.o spectre.c
+	gcc -o spectre.o -std=c99 spectre.c
