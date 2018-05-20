@@ -12,10 +12,11 @@ def train():
     trainer = pyspectre.getTrainerStr()
     scaler = preprocessing.StandardScaler()
     num_classes = len(trainer)
-    num_samples = 200000
+    num_samples = 500000
     X = np.zeros((num_samples, 256))
     y = np.zeros((num_samples, num_classes))
 
+    print("Sampling {} spectre.c training data...".format(num_samples))
     for i in range(num_samples):
         char_pos = i % num_classes
         sample = pyspectre.readMemoryByte(char_pos, True)
@@ -35,8 +36,10 @@ def train():
     # print(clf.score(X_test, y_test))
 
     model = tf.keras.Sequential([
-        tf.keras.layers.Dense(150, activation='relu', input_shape=(256,)),
-        tf.keras.layers.Dense(100, activation='relu'),
+        tf.keras.layers.Dense(200, activation='relu', input_shape=(256,)),
+        tf.keras.layers.Dropout(0.2),
+        tf.keras.layers.Dense(150, activation='relu'),
+        tf.keras.layers.Dropout(0.2),
         tf.keras.layers.Dense(num_classes, activation='softmax')
     ])
 
@@ -45,9 +48,9 @@ def train():
                   metrics=['accuracy'])
     print(model.summary())
 
-    model.fit(X_train, y_train, epochs=10, batch_size=32)
-    score = model.evaluate(X_test, y_test, batch_size=32)
-    print("Result on test set: loss: {}, accuracy: {}".format(score[0], score[1]))
+    model.fit(X_train, y_train, epochs=10, batch_size=32, validation_data=(X_test, y_test))
+    # score = model.evaluate(X_test, y_test, batch_size=32)
+    # print("Result on test set: loss: {}, accuracy: {}".format(score[0], score[1]))
     model.save('model.h5')
     joblib.dump(scaler, 'scaler.pkl')
 
@@ -56,7 +59,7 @@ def test_model():
     model = tf.keras.models.load_model('model.h5')
     scaler = joblib.load('scaler.pkl')
     trainer = pyspectre.getTrainerStr()
-    for i in range(10):
+    for _ in range(1):
         X = np.zeros((40, 256))
         for i in range(40):
             X[i] = np.array(pyspectre.readMemoryByte(i, False))
