@@ -59,14 +59,14 @@ def test_model():
     model = tf.keras.models.load_model('model.h5')
     scaler = joblib.load('scaler.pkl')
     trainer = pyspectre.getTrainerStr()
-    for _ in range(1):
-        X = np.zeros((40, 256))
-        for i in range(40):
-            X[i] = np.array(pyspectre.readMemoryByte(i, False))
-        X = scaler.transform(X)
-        predictions = model.predict(X)
-        chars = np.argmax(predictions, axis=1)
-        print("".join([trainer[x] for x in chars]))
+    len_secret = 40
+    X = np.zeros((len_secret, 256))
+    for i in range(len_secret):
+        X[i] = np.array(pyspectre.readMemoryByte(i, False))
+    X = scaler.transform(X)
+    predictions = model.predict(X)
+    chars = np.argmax(predictions, axis=1)
+    print("".join([trainer[x] for x in chars]))
 
 #train()
 test_model()
