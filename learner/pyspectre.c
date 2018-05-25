@@ -117,10 +117,15 @@ static PyObject* getTrainerStr(PyObject* self, PyObject *args) {
     return PyUnicode_FromFormat("%s", trainer);
 }
 
+static PyObject* getSecretStr(PyObject* self, PyObject *args) {
+    return PyUnicode_FromFormat("%s", secret);
+}
+
 /* Declaration of methods we can call from Python */
 static PyMethodDef PySpectreMethods[] = {
     { "readMemoryByte", readMemoryBytePy, METH_VARARGS, NULL },
     { "getTrainerStr", getTrainerStr, METH_NOARGS, NULL },
+    { "getSecretStr", getSecretStr, METH_NOARGS, NULL },
     { NULL, NULL, 0, NULL }
 };
 

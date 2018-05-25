@@ -8,6 +8,7 @@ import tensorflow as tf
 from sklearn.externals import joblib
 import time
 import sys
+import util
 
 
 def train():
@@ -28,8 +29,8 @@ def train():
         # create one hot encoding of known chars
         y[i] = np.eye(num_classes)[char_pos]
 
-    print("Standardizing cache timings...")
     # Standardize cache timings (zero mean and unit variance) to stabilize learning algorithm.
+    print("Standardizing cache timings...")
     X = scaler.fit_transform(X)
 
     # Split data into random 75% and 25% subsets for training and testing
@@ -58,22 +59,27 @@ def train():
 def test_model():
     model = tf.keras.models.load_model('model.h5')
     scaler = joblib.load('scaler.pkl')
-    time1 = time.time()
     trainer = pyspectre.getTrainerStr()
-    len_secret = 100000
-    X = np.zeros((len_secret, 256))
-    for i in range(len_secret):
-        X[i] = np.array(pyspectre.readMemoryByte(i, False))
-    X = scaler.transform(X)
-    predictions = model.predict(X)
-    chars = np.argmax(predictions, axis=1)
-    print("".join([trainer[x] for x in chars]))
-    print("Total time:", time.time()-time1)
+    secret = pyspectre.getSecretStr()
+
+    start_time = time.time()
+    guessed_secrets = []
+    for _ in range(3):
+        X = np.zeros((len(secret), 256))
+        for i in range(len(secret)):
+            X[i] = np.array(pyspectre.readMemoryByte(i, False))
+        X = scaler.transform(X)
+        guessed_chars = np.argmax(model.predict(X), axis=1)
+        guessed_secret = "".join([trainer[x] for x in guessed_chars])
+        guessed_secrets.append(guessed_secret)
+    
+    majority_guess = util.majority_vote(guessed_secrets)
+    print("Accuracy:", util.get_accuracy(majority_guess, secret))
+    print("Total time:", time.time()-start_time)
 
 
 if __name__ == "__main__":
-    arg = sys.argv[1]
-    if arg == 'train':
+    if len(sys.argv) > 1 and sys.argv[1] == 'train':
         print("Training model...")
         train()
     else:
