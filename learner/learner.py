@@ -65,6 +65,7 @@ def test_model():
     start_time = time.time()
     guessed_secrets = []
     for _ in range(3):
+        print("Sampling...")
         X = np.zeros((len(secret), 256))
         for i in range(len(secret)):
             X[i] = np.array(pyspectre.readMemoryByte(i, False))

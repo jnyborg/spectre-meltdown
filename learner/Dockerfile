@@ -1,10 +1,12 @@
 FROM python:3.6.5
 
-ADD . /app
-ADD ./pyspectre.c /app/pyspectre.c
+ADD requirements.txt /app/requirements.txt
 
 WORKDIR /app
 
-RUN apt-get install -y gcc && pip install -r requirements.txt &&  python setup.py install
+RUN pip install -r requirements.txt
+
+ADD . /app
+RUN python setup.py install
 
 ENTRYPOINT ["/bin/bash"]
