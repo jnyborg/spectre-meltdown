@@ -1,0 +1,5 @@
+tensorflow
+sklearn
+h5py
+numpy
+scipy
