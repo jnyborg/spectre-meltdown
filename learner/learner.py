@@ -6,24 +6,27 @@ from sklearn import svm
 import os
 import tensorflow as tf
 from sklearn.externals import joblib
+import time
 
 
 def train():
     trainer = pyspectre.getTrainerStr()
     scaler = preprocessing.StandardScaler()
     num_classes = len(trainer)
-    num_samples = 500000
+    num_samples = 10
     X = np.zeros((num_samples, 256))
     y = np.zeros((num_samples, num_classes))
 
     print("Sampling {} spectre.c training data...".format(num_samples))
     for i in range(num_samples):
         char_pos = i % num_classes
-        sample = pyspectre.readMemoryByte(char_pos, True)
-        X[i, :] = np.array(sample)
+        sample = np.array(pyspectre.readMemoryByte(char_pos, True))
+        X[i, :] = sample
+        print(sample)
         # create one hot encoding of known chars
         y[i] = np.eye(num_classes)[char_pos]
 
+    return
 
     # Standardize cache timings (zero mean and unit variance) to stabilize learning algorithm.
     X = scaler.fit_transform(X)
@@ -58,8 +61,9 @@ def train():
 def test_model():
     model = tf.keras.models.load_model('model.h5')
     scaler = joblib.load('scaler.pkl')
+    time1 = time.time()
     trainer = pyspectre.getTrainerStr()
-    len_secret = 40
+    len_secret = 100000
     X = np.zeros((len_secret, 256))
     for i in range(len_secret):
         X[i] = np.array(pyspectre.readMemoryByte(i, False))
@@ -67,6 +71,7 @@ def test_model():
     predictions = model.predict(X)
     chars = np.argmax(predictions, axis=1)
     print("".join([trainer[x] for x in chars]))
+    print("Total time:", time.time()-time1)
 
 #train()
 test_model()
