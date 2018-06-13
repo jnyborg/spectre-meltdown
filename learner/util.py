@@ -2,7 +2,7 @@ def get_accuracy(test, actual):
     correct = sum(1 for a, b in zip(test, actual) if a == b)
     return float(correct) / max(len(test), len(actual))
 
-def majority_vote(strings):
+def majority_vote(strings, weights, char_to_weight_map):
     merged = ""
     temp = {}
     char_index = 0
@@ -17,10 +17,13 @@ def majority_vote(strings):
             if not current_array['active']: # File is no longer active
                 continue
             
-            if current_array['arr'][char_index] in temp.keys():
-                temp[current_array['arr'][char_index]] += 1 # Increment the vote of this char
+            current_char = current_array['arr'][char_index]
+            weight = weights[char_index, char_to_weight_map[current_char]]
+
+            if current_char in temp.keys():
+                temp[current_char] += weight # Increment the vote of this char
             else:
-                temp[current_array['arr'][char_index]] = 1
+                temp[current_char] = weight
             
             if char_index + 1 >= len(current_array['arr']): # File is empty now
                 current_array['active'] = False

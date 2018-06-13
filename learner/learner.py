@@ -62,21 +62,38 @@ def test_model():
     trainer = pyspectre.getTrainerStr()
     secret = pyspectre.getSecretStr()
 
-    start_time = time.time()
-    guessed_secrets = []
-    for _ in range(3):
-        print("Sampling...")
-        X = np.zeros((len(secret), 256))
-        for i in range(len(secret)):
-            X[i] = np.array(pyspectre.readMemoryByte(i, False))
-        X = scaler.transform(X)
-        guessed_chars = np.argmax(model.predict(X), axis=1)
-        guessed_secret = "".join([trainer[x] for x in guessed_chars])
-        guessed_secrets.append(guessed_secret)
+    total_acc = 0
+    total_runtime = 0
+    total_runs = 3
+    samples = 4
     
-    majority_guess = util.majority_vote(guessed_secrets)
-    print("Accuracy:", util.get_accuracy(majority_guess, secret))
-    print("Total time:", time.time()-start_time)
+    for s in range(total_runs):
+        start_time = time.time()
+        guessed_secrets = []
+        weights = np.zeros((len(secret), len(trainer)))
+        for _ in range(samples):
+            print("Sampling...")
+            X = np.zeros((len(secret), 256))
+            for i in range(len(secret)):
+                X[i] = np.array(pyspectre.readMemoryByte(i, False))
+            X = scaler.transform(X)
+            prediction = model.predict(X)
+            guessed_chars = np.argmax(prediction, axis=1)
+            guessed_secret = "".join([trainer[x] for x in guessed_chars])
+            weights += prediction
+            guessed_secrets.append(guessed_secret)
+        
+        weight_to_char_map = {char: index for index, char in enumerate(trainer)}
+        majority_guess = util.majority_vote(guessed_secrets, weights, weight_to_char_map)
+        acc = util.get_accuracy(majority_guess, secret)
+        total_acc += acc
+        elapsed = time.time()-start_time
+        total_runtime += elapsed
+        print("Accuracy:", acc)
+        print("Total time:", elapsed)
+
+    print("Average accuracy:", (total_acc / total_runs))
+    print("Average time:", (total_runtime / total_runs))
 
 
 if __name__ == "__main__":
