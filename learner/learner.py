@@ -50,7 +50,7 @@ def train():
                   metrics=['accuracy'])
     print(model.summary())
 
-    model.fit(X_train, y_train, epochs=10, batch_size=32, validation_data=(X_test, y_test))
+    model.fit(X_train, y_train, epochs=5, batch_size=32, validation_data=(X_test, y_test))
 
     model.save('model.h5')
     joblib.dump(scaler, 'scaler.pkl')
@@ -95,13 +95,31 @@ def test_model():
     print("Average accuracy:", (total_acc / total_runs))
     print("Average time:", (total_runtime / total_runs))
 
+def inspect_timings():
+    trainer = pyspectre.getTrainerStr()
+    num_classes = len(trainer)
+    scaler = joblib.load('scaler.pkl')
+
+    for i in range(num_classes):
+        sample = np.array(pyspectre.readMemoryByte(i, True))
+        print(sample)
+    print(np.argmin(sample))
+    sample = scaler.transform(sample.reshape(1, -1))
+    print(np.argmin(sample))
+
 
 if __name__ == "__main__":
-    if len(sys.argv) > 1 and sys.argv[1] == 'train':
-        print("Training model...")
-        train()
-    else:
+    args = ['train', 'inspect']
+    if len(sys.argv) == 1:
         print("Testing model...")
         test_model()
+    elif sys.argv[1] == args[0]:
+        print("Training model...")
+        train()
+    elif sys.argv[1] == args[1]:
+        print("Inspecting timings")
+        inspect_timings()
+    else:
+        print("Unknown argument {}, known are {}".format(sys.argv[1], args))
 
     

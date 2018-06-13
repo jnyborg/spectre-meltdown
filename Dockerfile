@@ -1,7 +1,13 @@
-FROM ubuntu:trusty-20170620
+FROM python:3.6.5
 
-ADD . /spectre
+ADD learner/requirements.txt /app/requirements.txt
 
-RUN apt-get update && apt-get install -y gcc vim curl make
+
+RUN pip install -r /app/requirements.txt
+
+ADD . /app
+WORKDIR /app/learner
+
+RUN python setup.py install
 
 ENTRYPOINT ["/bin/bash"]
