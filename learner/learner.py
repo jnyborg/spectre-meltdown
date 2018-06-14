@@ -85,7 +85,7 @@ def test_model(keys=None):
             guessed_secrets = []
             weights = np.zeros((len(secret), len(trainer)))
             for _ in range(samples):
-                # print("Sampling...")
+                print("Sampling...")
                 X = np.zeros((len(secret), 256))
                 for i in range(len(secret)):
                     X[i] = np.array(get_pyspectre(keys).readMemoryByte(i, False))
