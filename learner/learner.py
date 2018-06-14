@@ -1,4 +1,6 @@
 import pyspectre
+import pyspectre35
+import pyspectre150
 import numpy as np
 from sklearn import preprocessing
 from sklearn.model_selection import train_test_split
@@ -9,7 +11,6 @@ from sklearn.externals import joblib
 import time
 import sys
 import util
-
 
 def train():
     trainer = pyspectre.getTrainerStr()
@@ -50,50 +51,59 @@ def train():
                   metrics=['accuracy'])
     print(model.summary())
 
-    model.fit(X_train, y_train, epochs=5, batch_size=32, validation_data=(X_test, y_test))
+    model.fit(X_train, y_train, epochs=2, batch_size=32, validation_data=(X_test, y_test))
 
     model.save('model.h5')
     joblib.dump(scaler, 'scaler.pkl')
 
+def test_model(keys=None):
+    spectre = None
+    if keys is None or keys is 1:
+        spectre = pyspectre
+    elif keys is 35:
+        specter = pyspectre35
+    elif keys is 150:
+        spectre = pyspectre150
+    else:
+        print("Error, invalid test_model keys argument")
+        raise Exception()
 
-def test_model():
     model = tf.keras.models.load_model('model.h5')
     scaler = joblib.load('scaler.pkl')
-    trainer = pyspectre.getTrainerStr()
-    secret = pyspectre.getSecretStr()
+    trainer = spectre.getTrainerStr()
+    secret = spectre.getSecretStr()
 
-    total_acc = 0
-    total_runtime = 0
-    total_runs = 3
-    samples = 4
-    
-    for s in range(total_runs):
-        start_time = time.time()
-        guessed_secrets = []
-        weights = np.zeros((len(secret), len(trainer)))
-        for _ in range(samples):
-            print("Sampling...")
-            X = np.zeros((len(secret), 256))
-            for i in range(len(secret)):
-                X[i] = np.array(pyspectre.readMemoryByte(i, False))
-            X = scaler.transform(X)
-            prediction = model.predict(X)
-            guessed_chars = np.argmax(prediction, axis=1)
-            guessed_secret = "".join([trainer[x] for x in guessed_chars])
-            weights += prediction
-            guessed_secrets.append(guessed_secret)
+    repetitions = 5
+
+    for samples in range(1, 11):
+        total_acc = 0
+        total_runtime = 0
         
-        weight_to_char_map = {char: index for index, char in enumerate(trainer)}
-        majority_guess = util.majority_vote(guessed_secrets, weights, weight_to_char_map)
-        acc = util.get_accuracy(majority_guess, secret)
-        total_acc += acc
-        elapsed = time.time()-start_time
-        total_runtime += elapsed
-        print("Accuracy:", acc)
-        print("Total time:", elapsed)
-
-    print("Average accuracy:", (total_acc / total_runs))
-    print("Average time:", (total_runtime / total_runs))
+        for s in range(repetitions):
+            start_time = time.time()
+            guessed_secrets = []
+            weights = np.zeros((len(secret), len(trainer)))
+            for _ in range(samples):
+                # print("Sampling...")
+                X = np.zeros((len(secret), 256))
+                for i in range(len(secret)):
+                    X[i] = np.array(spectre.readMemoryByte(i, False))
+                X = scaler.transform(X)
+                prediction = model.predict(X)
+                guessed_chars = np.argmax(prediction, axis=1)
+                guessed_secret = "".join([trainer[x] for x in guessed_chars])
+                weights += prediction
+                guessed_secrets.append(guessed_secret)
+            
+            weight_to_char_map = {char: index for index, char in enumerate(trainer)}
+            majority_guess = util.majority_vote(guessed_secrets, weights, weight_to_char_map)
+            acc = util.get_accuracy(majority_guess, secret)
+            total_acc += acc
+            elapsed = time.time()-start_time
+            total_runtime += elapsed
+            # print("Accuracy:", acc)
+            # print("Total time:", elapsed)
+        print(str(samples) + ",\t" + str(total_acc / repetitions) + ",\t" + str(total_runtime / repetitions))
 
 def inspect_timings():
     trainer = pyspectre.getTrainerStr()
@@ -109,7 +119,7 @@ def inspect_timings():
 
 
 if __name__ == "__main__":
-    args = ['train', 'inspect']
+    args = ['train', 'inspect', '1', '35', '150']
     if len(sys.argv) == 1:
         print("Testing model...")
         test_model()
@@ -119,7 +129,15 @@ if __name__ == "__main__":
     elif sys.argv[1] == args[1]:
         print("Inspecting timings")
         inspect_timings()
+    elif sys.argv[1] == args[2]:
+        print("Testing model for 1 key...")
+        test_model(1)
+    elif sys.argv[1] == args[2]:
+        print("Testing model for 35 keys...")
+        test_model(35)
+    elif sys.argv[1] == args[3]:
+        print("Testing model for 150 keys...")
+        test_model(150)
     else:
         print("Unknown argument {}, known are {}".format(sys.argv[1], args))
-
-    
+        
