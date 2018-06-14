@@ -12,6 +12,17 @@ import time
 import sys
 import util
 
+def get_pyspectre(keysize=None):
+    if keysize is None or keysize is 1:
+        return pyspectre
+    elif keysize is 35:
+        return pyspectre35
+    elif keysize is 150:
+        return pyspectre150
+    else:
+        print("Error, invalid get_pyspectre keysize argument")
+        raise Exception()
+
 def train():
     trainer = pyspectre.getTrainerStr()
     scaler = preprocessing.StandardScaler()
@@ -57,21 +68,11 @@ def train():
     joblib.dump(scaler, 'scaler.pkl')
 
 def test_model(keys=None):
-    spectre = None
-    if keys is None or keys is 1:
-        spectre = pyspectre
-    elif keys is 35:
-        specter = pyspectre35
-    elif keys is 150:
-        spectre = pyspectre150
-    else:
-        print("Error, invalid test_model keys argument")
-        raise Exception()
 
     model = tf.keras.models.load_model('model.h5')
     scaler = joblib.load('scaler.pkl')
-    trainer = spectre.getTrainerStr()
-    secret = spectre.getSecretStr()
+    trainer = get_pyspectre(keys).getTrainerStr()
+    secret = get_pyspectre(keys).getSecretStr()
 
     repetitions = 5
 
@@ -87,7 +88,7 @@ def test_model(keys=None):
                 # print("Sampling...")
                 X = np.zeros((len(secret), 256))
                 for i in range(len(secret)):
-                    X[i] = np.array(spectre.readMemoryByte(i, False))
+                    X[i] = np.array(get_pyspectre(keys).readMemoryByte(i, False))
                 X = scaler.transform(X)
                 prediction = model.predict(X)
                 guessed_chars = np.argmax(prediction, axis=1)
