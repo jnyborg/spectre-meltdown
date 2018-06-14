@@ -132,10 +132,10 @@ if __name__ == "__main__":
     elif sys.argv[1] == args[2]:
         print("Testing model for 1 key...")
         test_model(1)
-    elif sys.argv[1] == args[2]:
+    elif sys.argv[1] == args[3]:
         print("Testing model for 35 keys...")
         test_model(35)
-    elif sys.argv[1] == args[3]:
+    elif sys.argv[1] == args[4]:
         print("Testing model for 150 keys...")
         test_model(150)
     else:
