@@ -11,7 +11,6 @@ from sklearn.externals import joblib
 import time
 import sys
 import util
-from sklearn import tree
 
 def get_pyspectre(keysize=None):
     if keysize is None or keysize is 1:
