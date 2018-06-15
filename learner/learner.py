@@ -11,6 +11,7 @@ from sklearn.externals import joblib
 import time
 import sys
 import util
+from sklearn import tree
 
 def get_pyspectre(keysize=None):
     if keysize is None or keysize is 1:
@@ -29,13 +30,13 @@ def train():
     scaler = preprocessing.StandardScaler()
     num_classes = len(trainer)
     num_samples = 500000
-    X = np.zeros((num_samples, 256))
+    X = np.zeros((num_samples, num_classes))
     y = np.zeros((num_samples, num_classes))
 
     print("Sampling {} spectre.c training data...".format(num_samples))
     for i in range(num_samples):
         char_pos = i % num_classes
-        sample = np.array(pyspectre.readMemoryByte(char_pos, True))
+        sample = np.take(np.array(pyspectre.readMemoryByte(char_pos, True)), [ord(x) for x in trainer])
         if i % 100000 == 0:
             print(sample)
         X[i, :] = sample
@@ -51,7 +52,7 @@ def train():
     X_train, X_test, y_train, y_test = train_test_split(X, y)
 
     model = tf.keras.Sequential([
-        tf.keras.layers.Dense(200, activation='relu', input_shape=(256,)),
+        tf.keras.layers.Dense(200, activation='relu', input_shape=(num_classes,)),
         tf.keras.layers.Dropout(0.2),
         tf.keras.layers.Dense(150, activation='relu'),
         tf.keras.layers.Dropout(0.2),
@@ -88,9 +89,9 @@ def test_model(keys=1):
         weights = np.zeros((len(secret), len(trainer)))
         for _ in range(samples):
             # print("Sampling...")
-            X = np.zeros((len(secret), 256))
+            X = np.zeros((len(secret), len(trainer)))
             for i in range(len(secret)):
-                X[i] = np.array(get_pyspectre(keys).readMemoryByte(i, False))
+                X[i] = np.take(np.array(get_pyspectre(keys).readMemoryByte(i, False)), [ord(x) for x in trainer])
             X = scaler.transform(X)
             prediction = model.predict(X)
             guessed_chars = np.argmax(prediction, axis=1)
